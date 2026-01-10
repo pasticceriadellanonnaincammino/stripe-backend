@@ -7,28 +7,55 @@ dotenv.config();
 
 const app = express();
 
+/* =====================================================
+   🔐 CORS – CONFIGURAZIONE DEFINITIVA (www + non-www)
+===================================================== */
+
+const allowedOrigins = [
+  'https://pasticceriadellanonnaincammino.it',
+  'https://www.pasticceriadellanonnaincammino.it'
+];
+
 app.use(cors({
-  origin: 'https://pasticceriadellanonnaincammino.it',
+  origin: function (origin, callback) {
+    // Permette richieste senza origin (health check, curl, ecc.)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type']
 }));
 
-app.options('*', cors()); // ⭐ FONDAMENTALE
+// 🔥 PRE-FLIGHT OPTIONS (FONDAMENTALE)
+app.options('*', cors());
 
+/* =====================================================
+   📦 BODY PARSER
+===================================================== */
 app.use(express.json());
 
-
+/* =====================================================
+   💳 STRIPE
+===================================================== */
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2023-10-16'
 });
 
-
-// 🔎 Health check (utile per test)
+/* =====================================================
+   🔎 HEALTH CHECK
+===================================================== */
 app.get('/', (req, res) => {
   res.send('✅ Stripe backend attivo');
 });
 
-// 💳 Crea sessione Stripe Checkout
+/* =====================================================
+   💳 CREATE STRIPE CHECKOUT SESSION
+===================================================== */
 app.post('/create-stripe-session', async (req, res) => {
   try {
     const { totale, valuta = 'EUR', riepilogo } = req.body;
@@ -39,7 +66,6 @@ app.post('/create-stripe-session', async (req, res) => {
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
-
       payment_method_types: ['card'],
 
       line_items: [{
@@ -56,21 +82,25 @@ app.post('/create-stripe-session', async (req, res) => {
         quantity: 1
       }],
 
-      success_url: 'https://pasticceriadellanonnaincammino.it/grazie.html?stripe=ok',
-      cancel_url: 'https://pasticceriadellanonnaincammino.it/pagamento-annullato.html'
+      success_url:
+        'https://pasticceriadellanonnaincammino.it/grazie.html?stripe=ok',
+      cancel_url:
+        'https://pasticceriadellanonnaincammino.it/pagamento-annullato.html'
     });
 
     res.json({ sessionId: session.id });
 
   } catch (err) {
-    console.error('❌ Errore Stripe:', err.message);
+    console.error('❌ Errore Stripe:', err);
     res.status(500).json({ error: 'Errore Stripe' });
   }
 });
 
-// ▶️ Avvio server
-const PORT = process.env.PORT || 3000;
+/* =====================================================
+   ▶️ START SERVER (RENDER)
+===================================================== */
+const PORT = process.env.PORT || 10000;
+
 app.listen(PORT, () => {
   console.log(`🚀 Stripe server avviato sulla porta ${PORT}`);
-
 });
