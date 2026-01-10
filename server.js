@@ -7,8 +7,16 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());          // ✅ FONDAMENTALE
+app.use(cors({
+  origin: 'https://pasticceriadellanonnaincammino.it',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type']
+}));
+
+app.options('*', cors()); // ⭐ FONDAMENTALE
+
 app.use(express.json());
+
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2023-10-16'
