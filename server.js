@@ -1,38 +1,25 @@
 import express from 'express';
 import Stripe from 'stripe';
 import dotenv from 'dotenv';
-import cors from 'cors';
 
 dotenv.config();
 
 const app = express();
 
 /* =====================================================
-   🔐 CORS – CONFIGURAZIONE DEFINITIVA (www + non-www)
+   🔐 CORS – FIX DEFINITIVO (RENDER SAFE)
 ===================================================== */
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
 
-const allowedOrigins = [
-  'https://pasticceriadellanonnaincammino.it',
-  'https://www.pasticceriadellanonnaincammino.it'
-];
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
 
-app.use(cors({
-  origin: function (origin, callback) {
-    // Permette richieste senza origin (health check, curl, ecc.)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      return callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type']
-}));
-
-// 🔥 PRE-FLIGHT OPTIONS (FONDAMENTALE)
-app.options('*', cors());
+  next();
+});
 
 /* =====================================================
    📦 BODY PARSER
