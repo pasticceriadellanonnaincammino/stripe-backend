@@ -1,16 +1,19 @@
 import express from 'express';
 import Stripe from 'stripe';
 import dotenv from 'dotenv';
+import cors from 'cors';
 
 dotenv.config();
 
 const app = express();
+
+app.use(cors());          // ✅ FONDAMENTALE
 app.use(express.json());
 
-// 🔐 Inizializza Stripe con la secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2023-10-16'
 });
+
 
 // 🔎 Health check (utile per test)
 app.get('/', (req, res) => {
