@@ -28,9 +28,8 @@ app.use(express.json());
 /* =====================================================
    💳 STRIPE (API 2025)
 ===================================================== */
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-06-30'
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
 
 /* =====================================================
    🔎 HEALTH CHECK
